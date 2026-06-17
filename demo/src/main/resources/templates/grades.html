@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Журнал оценок | EduJournal</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <div class="header-actions" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <h1>Журнал оценок</h1>
+            <button sec:authorize="hasRole('TEACHER')" class="btn" style="width: auto;" onclick="document.getElementById('grade-modal').style.display='block'">Выставить оценку</button>
+        </div>
+
+        <div th:if="${param.success}" class="alert alert-success" style="background: var(--success); color: white; padding: 1rem; border-radius: var(--radius); margin-bottom: 1.5rem;">
+            Оценка успешно добавлена!
+        </div>
+
+        <!-- Student View: List of grades -->
+        <div sec:authorize="hasRole('STUDENT')" class="table-container" style="background: var(--surface); padding: 1.5rem; border-radius: var(--radius); border: 1px solid var(--border); overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                <thead>
+                    <tr style="border-bottom: 2px solid var(--border);">
+                        <th style="padding: 1rem;">Предмет</th>
+                        <th style="padding: 1rem;">Оценка</th>
+                        <th style="padding: 1rem;">Дата</th>
+                        <th style="padding: 1rem;">Учитель</th>
+                        <th style="padding: 1rem;">Комментарий</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="grade : ${grades}" style="border-bottom: 1px solid var(--border);">
+                        <td style="padding: 1rem;" th:text="${grade.subjectName}">Математика</td>
+                        <td style="padding: 1rem;">
+                            <span th:text="${grade.value}" 
+                                  th:style="'background:' + (${grade.value >= 4} ? 'var(--success)' : 'var(--error)') + '; color: white; padding: 0.25rem 0.75rem; border-radius: 4px;'">5</span>
+                        </td>
+                        <td style="padding: 1rem;" th:text="${grade.date}">15.06.2026</td>
+                        <td style="padding: 1rem;" th:text="${grade.teacherName}">Иванов И.И.</td>
+                        <td style="padding: 1rem; color: var(--text-muted);" th:text="${grade.comment}">Отличная работа</td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(grades)}">
+                        <td colspan="5" style="padding: 2rem; text-align: center; color: var(--text-muted);">Оценок пока нет</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Teacher View: Modal for adding grades -->
+        <div id="grade-modal" class="modal" style="display:none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7);">
+            <div class="auth-container" style="margin: 5% auto; background: var(--surface); padding: 2rem; border: 1px solid var(--border); border-radius: var(--radius);">
+                <span onclick="document.getElementById('grade-modal').style.display='none'" style="float: right; cursor: pointer; font-size: 1.5rem;">&times;</span>
+                <h2>Выставить оценку</h2>
+                <form th:action="@{/grades/add}" method="post" style="margin-top: 1.5rem;">
+                    <div class="form-group">
+                        <label>Ученик</label>
+                        <select name="studentId" required style="width: 100%; padding: 0.75rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);">
+                            <option th:each="student : ${students}" th:if="${student.role.name() == 'STUDENT'}" th:value="${student.id}" th:text="${student.fullName}"></option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Предмет</label>
+                        <select name="subjectId" required style="width: 100%; padding: 0.75rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);">
+                            <option th:each="sub : ${subjects}" th:value="${sub.id}" th:text="${sub.name}"></option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Оценка (1-5)</label>
+                        <input type="number" name="value" min="1" max="5" required style="width: 100%; padding: 0.75rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);">
+                    </div>
+                    <div class="form-group">
+                        <label>Комментарий</label>
+                        <textarea name="comment" style="width: 100%; padding: 0.75rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius); height: 100px;"></textarea>
+                    </div>
+                    <button type="submit" class="btn">Сохранить</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

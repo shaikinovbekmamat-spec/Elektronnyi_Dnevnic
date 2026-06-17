@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Объявления | EduJournal</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <div class="header-actions" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <h1>Объявления</h1>
+            <button sec:authorize="hasAnyRole('TEACHER', 'DIRECTOR')" class="btn" style="width: auto;" onclick="document.getElementById('ann-modal').style.display='block'">Создать объявление</button>
+        </div>
+
+        <div th:if="${param.success}" class="alert alert-success" style="background: var(--success); color: white; padding: 1rem; border-radius: var(--radius); margin-bottom: 1.5rem;">
+            Объявление успешно опубликовано!
+        </div>
+
+        <div class="announcements-list" style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <div th:each="ann : ${announcements}" class="card" style="background: var(--surface); padding: 1.5rem; border-radius: var(--radius); border: 1px solid var(--border); border-left: 5px solid var(--primary);">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h2 th:text="${ann.title}" style="margin: 0; color: var(--primary);">Заголовок</h2>
+                    <span class="badge" th:text="${ann.targetType}" style="background: var(--background); padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; border: 1px solid var(--border);">GENERAL</span>
+                </div>
+                <p style="margin-top: 1rem; color: var(--text); line-height: 1.6;" th:text="${ann.content}">Текст объявления...</p>
+                <div style="margin-top: 1.5rem; display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted);">
+                    <div style="display: flex; gap: 1.5rem;">
+                        <span th:if="${ann.className != null}">Класс: <strong th:text="${ann.className}">10А</strong></span>
+                        <span th:if="${ann.subjectName != null}">Предмет: <strong th:text="${ann.subjectName}">Математика</strong></span>
+                    </div>
+                    <span>Автор: <strong th:text="${ann.authorName}">Администрация</strong></span>
+                </div>
+            </div>
+            <div th:if="${#lists.isEmpty(announcements)}" style="text-align: center; padding: 3rem; color: var(--text-muted); background: var(--surface); border-radius: var(--radius);">
+                <p>Объявлений пока нет</p>
+            </div>
+        </div>
+
+        <!-- Admin/Teacher Modal for announcements -->
+        <div id="ann-modal" class="modal" style="display:none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7);">
+            <div class="auth-container" style="margin: 5% auto; background: var(--surface); padding: 2rem; border: 1px solid var(--border); border-radius: var(--radius); max-width: 500px;">
+                <span onclick="document.getElementById('ann-modal').style.display='none'" style="float: right; cursor: pointer; font-size: 1.5rem;">&times;</span>
+                <h2>Создать объявление</h2>
+                <form th:action="@{/announcements/add}" method="post" style="margin-top: 1.5rem;">
+                    <div class="form-group">
+                        <label>Заголовок</label>
+                        <input type="text" name="title" required style="width: 100%; padding: 0.75rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);">
+                    </div>
+                    <div class="form-group">
+                        <label>Содержание</label>
+                        <textarea name="content" required style="width: 100%; padding: 0.75rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius); height: 120px;"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Тип</label>
+                        <select name="type" required style="width: 100%; padding: 0.75rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);">
+                            <option value="GENERAL">Общее</option>
+                            <option value="CLASS">Для класса</option>
+                            <option value="SUBJECT">По предмету</option>
+                            <option value="EXAM">Экзамены</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="class-select" style="display:none;">
+                        <label>Класс</label>
+                        <select name="classId" style="width: 100%; padding: 0.75rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);">
+                            <option value="">Выберите класс</option>
+                            <option th:each="cl : ${classes}" th:value="${cl.id}" th:text="${cl.name}"></option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="subject-select" style="display:none;">
+                        <label>Предмет</label>
+                        <select name="subjectId" style="width: 100%; padding: 0.75rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);">
+                            <option value="">Выберите предмет</option>
+                            <option th:each="sub : ${subjects}" th:value="${sub.id}" th:text="${sub.name}"></option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn">Опубликовать</button>
+                </form>
+                <script>
+                    document.querySelector('select[name="type"]').addEventListener('change', function() {
+                        document.getElementById('class-select').style.display = (this.value === 'CLASS') ? 'block' : 'none';
+                        document.getElementById('subject-select').style.display = (this.value === 'SUBJECT') ? 'block' : 'none';
+                    });
+                </script>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      th:replace="~{layout :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Вход | EduJournal</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <div class="auth-container">
+            <h1>Вход в систему</h1>
+            <form th:action="@{/login}" method="post">
+                <div th:if="${param.error}" class="form-group">
+                    <p style="color: var(--error); text-align: center;">Неверный логин или пароль</p>
+                </div>
+                <div th:if="${param.logout}" class="form-group">
+                    <p style="color: var(--success); text-align: center;">Вы успешно вышли</p>
+                </div>
+                <div th:if="${param.registered}" class="form-group">
+                    <p style="color: var(--success); text-align: center;">Регистрация прошла успешно! Теперь вы можете войти.</p>
+                </div>
+                
+                <div class="form-group">
+                    <label for="username">Имя пользователя (Логин)</label>
+                    <input type="text" id="username" name="username" required autofocus>
+                </div>
+                <div class="form-group">
+                    <label for="password">Пароль</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="btn">Войти</button>
+            </form>
+            <p style="margin-top: 1.5rem; text-align: center; color: var(--text-muted); font-size: 0.875rem;">
+                Демонстрационный доступ:<br>
+                Director: director / password<br>
+                Teacher: teacher / password<br>
+                Student: student / password
+            </p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,39 @@
+spring:
+  application:
+    name: EduJournal
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/edujournal
+    username: postgres
+    password: 5555
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+jwt:
+  secret: "3d7f4a9b2e6c1f8d5a0e3b7c9f2a4d6e8b1c5f0a3d7e9b2f4a6c8d0e2b5f7a9"
+  expiration: 86400000
+
+file:
+  upload-dir: uploads
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: alpha
+    tagsSorter: alpha
+    displayRequestDuration: true
+
+servlet:
+  multipart:
+    max-file-size: 10MB
+    max-request-size: 10MB

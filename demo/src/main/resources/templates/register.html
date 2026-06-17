@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      th:replace="~{layout :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Регистрация | EduJournal</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <div class="auth-container">
+            <h1>Регистрация</h1>
+            <form th:action="@{/register}" method="post" th:object="${userRequest}">
+                <div th:if="${error}" class="form-group">
+                    <p style="color: var(--error); text-align: center;" th:text="${error}"></p>
+                </div>
+                <div class="form-group">
+                    <label for="username">Логин</label>
+                    <input type="text" id="username" th:field="*{username}" required autofocus>
+                </div>
+                <div class="form-group">
+                    <label for="fullName">Полное имя</label>
+                    <input type="text" id="fullName" th:field="*{fullName}" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" th:field="*{email}" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Пароль</label>
+                    <input type="password" id="password" th:field="*{password}" required>
+                </div>
+                <div class="form-group">
+                    <label for="role">Роль</label>
+                    <select id="role" th:field="*{role}" required>
+                        <option value="STUDENT">Ученик</option>
+                        <option value="TEACHER">Учитель</option>
+                        <option value="DIRECTOR">Директор</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn">Зарегистрироваться</button>
+            </form>
+            <p style="margin-top: 1.5rem; text-align: center;">
+                Уже есть аккаунт? <a th:href="@{/login}">Войти</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

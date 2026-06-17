@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:fragment="layout(title, content)">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:replace="${title}">EduJournal</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <nav class="container">
+            <div class="logo">EduJournal</div>
+            <ul class="nav-links">
+                <li><a th:href="@{/dashboard}">Дашборд</a></li>
+                <li><a th:href="@{/logout}">Выход</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container">
+        <div th:replace="${content}"></div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 EduJournal - Электронный дневник школы</p>
+        </div>
+    </footer>
+</body>
+</html>

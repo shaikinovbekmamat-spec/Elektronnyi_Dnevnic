@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Домашние задания | EduJournal</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <div class="header-actions" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <h1>Домашние задания</h1>
+            <button sec:authorize="hasRole('TEACHER')" class="btn" style="width: auto;" onclick="document.getElementById('homework-modal').style.display='block'">Выдать задание</button>
+        </div>
+
+        <div th:if="${param.success}" class="alert alert-success" style="background: var(--success); color: white; padding: 1rem; border-radius: var(--radius); margin-bottom: 1.5rem;">
+            Задание успешно создано!
+        </div>
+
+        <div class="grid-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 2rem;">
+            <div th:each="hw : ${homeworks}" class="card" style="background: var(--surface); padding: 1.5rem; border-radius: var(--radius); border: 1px solid var(--border); display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <h3 th:text="${hw.title}">Название задания</h3>
+                        <span class="badge" th:text="${hw.subjectName}" style="background: var(--primary); color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem;">Предмет</span>
+                    </div>
+                    <p style="margin-top: 1rem; color: var(--text);" th:text="${hw.description}">Описание задания будет здесь...</p>
+                    <div style="margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-muted);">
+                        <p>Срок сдачи: <strong th:text="${hw.dueDate}" style="color: var(--error);">20.06.2026</strong></p>
+                        <p>Класс: <span th:text="${hw.className}">10А</span></p>
+                    </div>
+                </div>
+                <div style="margin-top: 1.5rem; display: flex; gap: 1rem;" th:if="${hw.filePath != null}">
+                    <a th:href="${'/files/' + hw.filePath}" class="btn btn-outline" style="width: 100%; text-align: center; border: 1px solid var(--primary); color: var(--primary); padding: 0.5rem; border-radius: 4px; text-decoration: none;">Скачать файл</a>
+                </div>
+            </div>
+            <div th:if="${#lists.isEmpty(homeworks)}" style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-muted); background: var(--surface); border-radius: var(--radius);">
+                <p>Заданий пока нет</p>
+            </div>
+        </div>
+
+        <!-- Teacher View: Modal for adding homework -->
+        <div id="homework-modal" class="modal" style="display:none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7);">
+            <div class="auth-container" style="margin: 2% auto; background: var(--surface); padding: 2rem; border: 1px solid var(--border); border-radius: var(--radius); max-width: 500px;">
+                <span onclick="document.getElementById('homework-modal').style.display='none'" style="float: right; cursor: pointer; font-size: 1.5rem;">&times;</span>
+                <h2>Выдать задание</h2>
+                <form th:action="@{/homework/add}" method="post" enctype="multipart/form-data" style="margin-top: 1.5rem;">
+                    <div class="form-group">
+                        <label>Заголовок</label>
+                        <input type="text" name="title" required style="width: 100%; padding: 0.75rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);">
+                    </div>
+                    <div class="form-group">
+                        <label>Описание</label>
+                        <textarea name="description" required style="width: 100%; padding: 0.75rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius); height: 80px;"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Класс</label>
+                        <select name="classId" required style="width: 100%; padding: 0.75rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);">
+                            <option th:each="cl : ${classes}" th:value="${cl.id}" th:text="${cl.name}"></option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Предмет</label>
+                        <select name="subjectId" required style="width: 100%; padding: 0.75rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);">
+                            <option th:each="sub : ${subjects}" th:value="${sub.id}" th:text="${sub.name}"></option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Срок сдачи</label>
+                        <input type="date" name="dueDate" required style="width: 100%; padding: 0.75rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);">
+                    </div>
+                    <div class="form-group">
+                        <label>Прикрепить файл (необязательно)</label>
+                        <input type="file" name="file" style="width: 100%; padding: 0.75rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);">
+                    </div>
+                    <button type="submit" class="btn">Выдать задание</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
