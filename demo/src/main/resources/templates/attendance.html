@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Журнал посещаемости | EduJournal</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <div class="header-actions" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <h1>Журнал посещаемости</h1>
+            <a th:href="@{/dashboard}" class="btn" style="width: auto;">Назад</a>
+        </div>
+
+        <div th:if="${param.success}" style="background: var(--success); color: white; padding: 1rem; border-radius: var(--radius); margin-bottom: 1.5rem;">
+            Отметка сохранена.
+        </div>
+        <div th:if="${param.error}" style="background: var(--error); color: white; padding: 1rem; border-radius: var(--radius); margin-bottom: 1.5rem;">
+            Не удалось сохранить отметку.
+        </div>
+
+        <section sec:authorize="hasRole('STUDENT')" style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1.5rem;">
+            <h2 style="margin-bottom: 0.5rem;">Моя посещаемость</h2>
+            <p style="margin: 0; color: var(--text-muted);">Ниже показаны все ваши отметки посещаемости.</p>
+        </section>
+
+        <section sec:authorize="hasRole('TEACHER')" style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1.5rem;">
+            <h2 style="margin-bottom: 0.75rem;">Классы</h2>
+            <div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
+                <a th:each="cl : ${availableClasses}"
+                   th:href="@{/attendance(classId=${cl.id})}"
+                   th:classappend="${selectedClass != null and selectedClass.id == cl.id} ? ' active' : ''"
+                   class="btn"
+                   style="width: auto;"
+                   th:text="${cl.name}">8A</a>
+            </div>
+        </section>
+
+        <section sec:authorize="hasRole('STUDENT')" style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem;">
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid var(--border);">
+                            <th style="padding: 0.75rem;">Предмет</th>
+                            <th style="padding: 0.75rem;">Дата</th>
+                            <th style="padding: 0.75rem;">Урок</th>
+                            <th style="padding: 0.75rem;">Статус</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="att : ${studentAttendance}" style="border-bottom: 1px solid var(--border);">
+                            <td style="padding: 0.75rem;" th:text="${att.subjectName}">Математика</td>
+                            <td style="padding: 0.75rem;" th:text="${att.date}">2026-06-19</td>
+                            <td style="padding: 0.75rem;" th:text="${att.startTime}">08:00</td>
+                            <td style="padding: 0.75rem;" th:text="${att.status}">PRESENT</td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(studentAttendance)}">
+                            <td colspan="4" style="padding: 1.5rem; text-align: center; color: var(--text-muted);">Отметок пока нет.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section sec:authorize="hasRole('TEACHER')" th:if="${selectedClass == null}" style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem;">
+            <p style="color: var(--text-muted); margin: 0;">Нет доступных классов.</p>
+        </section>
+
+        <section sec:authorize="hasRole('TEACHER')" th:if="${selectedClass != null}">
+            <div th:if="${#lists.isEmpty(attendanceLessons)}" style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; color: var(--text-muted);">
+                На сегодня по этому классу и предмету нет уроков.
+            </div>
+
+            <div th:each="lesson : ${attendanceLessons}" style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1rem;">
+                <div style="display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem;">
+                    <div>
+                        <h2 style="margin: 0;" th:text="${lesson.className + ' | ' + lesson.subjectName}">8A | Математика</h2>
+                        <div style="color: var(--text-muted);" th:text="${lesson.startTime + ' - ' + lesson.endTime + (lesson.room != null ? ', ' + lesson.room : '')}">08:00 - 08:45</div>
+                    </div>
+                    <div style="color: var(--text-muted);" th:text="${today}">2026-06-19</div>
+                </div>
+
+                <div style="display: grid; gap: 0.75rem;">
+                    <div style="display: grid; grid-template-columns: minmax(180px, 2fr) minmax(160px, 1fr) auto; gap: 0.75rem; padding: 0.75rem 0; border-bottom: 1px solid var(--border); font-weight: 600;">
+                        <div>Ученик</div>
+                        <div>Статус</div>
+                        <div>Действие</div>
+                    </div>
+                    <form th:each="row : ${lesson.rows}" th:action="@{/attendance/mark}" method="post" style="display: grid; grid-template-columns: minmax(180px, 2fr) minmax(160px, 1fr) auto; gap: 0.75rem; align-items: center; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border);">
+                        <input type="hidden" name="studentId" th:value="${row.studentId}">
+                        <input type="hidden" name="scheduleId" th:value="${lesson.scheduleId}">
+                        <input type="hidden" name="classId" th:value="${lesson.classId}">
+                        <div th:text="${row.studentName}">Ученик</div>
+                        <select name="status" style="width: 100%; padding: 0.55rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);">
+                            <option value="" th:selected="${row.status == null or row.status == ''}">Выберите</option>
+                            <option value="PRESENT" th:selected="${row.status == 'PRESENT'}">Присутствует</option>
+                            <option value="ABSENT" th:selected="${row.status == 'ABSENT'}">Отсутствует</option>
+                            <option value="LATE" th:selected="${row.status == 'LATE'}">Опоздал</option>
+                        </select>
+                        <button type="submit" class="btn" style="width: auto;">Сохранить</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </div>
+</body>
+</html>

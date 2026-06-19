@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Управление школой | EduJournal</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <div class="header-actions" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <h1>Управление школой</h1>
+            <a th:href="@{/dashboard}" class="btn" style="width: auto;">Назад</a>
+        </div>
+
+        <div th:if="${param.success}" style="background: var(--success); color: white; padding: 1rem; border-radius: var(--radius); margin-bottom: 1.5rem;">
+            Изменения сохранены.
+        </div>
+        <div th:if="${param.classError}" style="background: var(--error); color: white; padding: 1rem; border-radius: var(--radius); margin-bottom: 1.5rem;">
+            Нельзя перевести студента в класс ниже текущего.
+        </div>
+        <div th:if="${param.classNotEmpty}" style="background: var(--error); color: white; padding: 1rem; border-radius: var(--radius); margin-bottom: 1.5rem;">
+            Класс можно удалить только когда в нем нет студентов.
+        </div>
+        <div th:if="${param.deleteError != null or param.classManageError != null}" style="background: var(--error); color: white; padding: 1rem; border-radius: var(--radius); margin-bottom: 1.5rem;">
+            Операция не выполнена. Проверьте связанные данные или уникальность названия.
+        </div>
+
+        <section style="margin-bottom: 3rem;">
+            <h2 style="margin-bottom: 1rem;">Классы</h2>
+            <form th:action="@{/director/classes/add}" method="post" style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; display: grid; grid-template-columns: minmax(160px, 1fr) 120px auto; gap: 0.75rem; align-items: end; margin-bottom: 1rem;">
+                <div>
+                    <label>Название</label>
+                    <input type="text" name="name" placeholder="8A" required style="width: 100%; padding: 0.65rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);">
+                </div>
+                <div>
+                    <label>Год</label>
+                    <input type="number" name="year" min="1" max="12" required style="width: 100%; padding: 0.65rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);">
+                </div>
+                <button type="submit" class="btn" style="width: auto;">Добавить</button>
+            </form>
+
+            <div style="display: grid; gap: 0.75rem;">
+                <div th:each="cl : ${classes}" style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem;">
+                    <form th:action="@{/director/classes/{id}/edit(id=${cl.id})}" method="post" style="display: grid; grid-template-columns: minmax(160px, 1fr) 120px auto auto; gap: 0.75rem; align-items: end;">
+                        <div>
+                            <label>Название</label>
+                            <input type="text" name="name" th:value="${cl.name}" required style="width: 100%; padding: 0.65rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);">
+                        </div>
+                        <div>
+                            <label>Год</label>
+                            <input type="number" name="year" min="1" max="12" th:value="${cl.year}" required style="width: 100%; padding: 0.65rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);">
+                        </div>
+                        <button type="submit" class="btn" style="width: auto;">Сохранить</button>
+                    </form>
+                    <form th:action="@{/director/classes/{id}/delete(id=${cl.id})}" method="post" style="margin-top: 0.75rem;">
+                        <button type="submit" class="btn" style="width: auto; background: var(--error);">Удалить класс</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <section style="margin-bottom: 3rem;">
+            <h2 style="margin-bottom: 1rem;">Студенты</h2>
+            <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid var(--border); text-align: left;">
+                            <th style="padding: 1rem;">ФИО</th>
+                            <th style="padding: 1rem;">Логин</th>
+                            <th style="padding: 1rem;">Текущий класс</th>
+                            <th style="padding: 1rem;">Изменить класс</th>
+                            <th style="padding: 1rem;">Удалить</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="student : ${students}" style="border-bottom: 1px solid var(--border);">
+                            <td style="padding: 1rem;" th:text="${student.fullName}">Student</td>
+                            <td style="padding: 1rem;" th:text="${student.username}">student</td>
+                            <td style="padding: 1rem;" th:text="${student.studentClass != null ? student.studentClass.name : 'Не назначен'}">8A</td>
+                            <td style="padding: 1rem;">
+                                <form th:action="@{/director/users/{id}/class(id=${student.id})}" method="post" style="display: flex; gap: 0.75rem; align-items: center;">
+                                    <select name="classId" required style="min-width: 120px; padding: 0.6rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);">
+                                        <option th:each="cl : ${classes}" th:if="${student.studentClass == null or cl.year >= student.studentClass.year}" th:value="${cl.id}" th:selected="${student.studentClass != null and student.studentClass.id == cl.id}" th:text="${cl.name}">8A</option>
+                                    </select>
+                                    <button type="submit" class="btn" style="width: auto;">Сохранить</button>
+                                </form>
+                            </td>
+                            <td style="padding: 1rem;">
+                                <form th:action="@{/director/users/{id}/delete(id=${student.id})}" method="post">
+                                    <button type="submit" class="btn" style="width: auto; background: var(--error);">Удалить</button>
+                                </form>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(students)}">
+                            <td colspan="5" style="padding: 2rem; text-align: center; color: var(--text-muted);">Студентов нет</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section style="margin-bottom: 3rem;">
+            <h2 style="margin-bottom: 1rem;">Учителя</h2>
+            <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid var(--border); text-align: left;">
+                            <th style="padding: 1rem;">ФИО</th>
+                            <th style="padding: 1rem;">Логин</th>
+                            <th style="padding: 1rem;">Предмет</th>
+                            <th style="padding: 1rem;">Изменить предмет</th>
+                            <th style="padding: 1rem;">Удалить</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="teacher : ${teachers}" style="border-bottom: 1px solid var(--border);">
+                            <td style="padding: 1rem;" th:text="${teacher.fullName}">Teacher</td>
+                            <td style="padding: 1rem;" th:text="${teacher.username}">teacher</td>
+                            <td style="padding: 1rem;" th:text="${teacher.teacherSubject != null ? teacher.teacherSubject.name : 'Не назначен'}">Mathematics</td>
+                            <td style="padding: 1rem;">
+                                <form th:action="@{/director/users/{id}/subject(id=${teacher.id})}" method="post" style="display: flex; gap: 0.75rem; align-items: center;">
+                                    <select name="subjectId" required style="min-width: 180px; padding: 0.6rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);">
+                                        <option th:each="subject : ${subjects}" th:value="${subject.id}" th:selected="${teacher.teacherSubject != null and teacher.teacherSubject.id == subject.id}" th:text="${subject.name}">Mathematics</option>
+                                    </select>
+                                    <button type="submit" class="btn" style="width: auto;">Сохранить</button>
+                                </form>
+                            </td>
+                            <td style="padding: 1rem;">
+                                <form th:action="@{/director/users/{id}/delete(id=${teacher.id})}" method="post">
+                                    <button type="submit" class="btn" style="width: auto; background: var(--error);">Удалить</button>
+                                </form>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(teachers)}">
+                            <td colspan="5" style="padding: 2rem; text-align: center; color: var(--text-muted);">Учителей нет</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section>
+            <h2 style="margin-bottom: 1rem;">Директора</h2>
+            <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid var(--border); text-align: left;">
+                            <th style="padding: 1rem;">ФИО</th>
+                            <th style="padding: 1rem;">Логин</th>
+                            <th style="padding: 1rem;">Удалить</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="director : ${directors}" style="border-bottom: 1px solid var(--border);">
+                            <td style="padding: 1rem;" th:text="${director.fullName}">Director</td>
+                            <td style="padding: 1rem;" th:text="${director.username}">director</td>
+                            <td style="padding: 1rem;">
+                                <form th:action="@{/director/users/{id}/delete(id=${director.id})}" method="post">
+                                    <button type="submit" class="btn" style="width: auto; background: var(--error);">Удалить</button>
+                                </form>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(directors)}">
+                            <td colspan="3" style="padding: 2rem; text-align: center; color: var(--text-muted);">Директоров нет</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</body>
+</html>

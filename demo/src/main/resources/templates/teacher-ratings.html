@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Оценка учителей | EduJournal</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <div class="header-actions" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <h1>Оценка учителей</h1>
+            <a th:href="@{/dashboard}" class="btn" style="width: auto;">Назад</a>
+        </div>
+
+        <section sec:authorize="hasRole('STUDENT')" style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.5rem;">
+            <h2 style="margin-bottom: 0.5rem;">Ваши оценки</h2>
+            <p style="color: var(--text-muted); margin-bottom: 0;">Выберите учителя и выставьте оценку от 1 до 5.</p>
+        </section>
+
+        <section sec:authorize="hasAnyRole('TEACHER', 'DIRECTOR')" style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.5rem;">
+            <h2 style="margin-bottom: 0.5rem;">Сводный рейтинг</h2>
+            <p style="color: var(--text-muted); margin-bottom: 0;">Данные показаны без информации об отдельных студентах.</p>
+        </section>
+
+        <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem;">
+            <div class="teacher-rating-list" th:if="${not #lists.isEmpty(teacherRatings)}">
+                <div th:each="stat : ${teacherRatings}" class="teacher-rating-row" style="display: flex; justify-content: space-between; gap: 1rem; padding: 1rem 0; border-bottom: 1px solid var(--border); flex-wrap: wrap;">
+                    <div class="teacher-rating-info" style="min-width: 220px;">
+                        <strong th:text="${stat.teacherName}">Учитель</strong>
+                        <div th:text="${stat.subjectName != null ? stat.subjectName : 'Предмет не назначен'}" style="color: var(--text-muted);">Предмет</div>
+                        <small th:text="${stat.averageRating != null ? #numbers.formatDecimal(stat.averageRating, 1, 2) + ' / 5' : 'Нет оценок'}">4.50 / 5</small>
+                    </div>
+
+                    <form sec:authorize="hasRole('STUDENT')" th:action="@{/teacher-ratings/{id}(id=${stat.teacherId})}" method="post" class="stars-form" style="display: flex; gap: 0.35rem; align-items: center; flex-wrap: wrap;">
+                        <button th:each="star : ${#numbers.sequence(1, 5)}"
+                                type="submit"
+                                name="rating"
+                                th:value="${star}"
+                                th:classappend="${stat.currentStudentRating != null and star <= stat.currentStudentRating} ? ' active' : ''"
+                                th:title="|${star} из 5|"
+                                style="border: 0; background: transparent; font-size: 1.35rem; color: var(--text-muted); cursor: pointer;">★</button>
+                    </form>
+
+                    <div sec:authorize="hasAnyRole('TEACHER', 'DIRECTOR')" style="min-width: 120px; text-align: right;">
+                        <div th:text="${stat.averageRating != null ? #numbers.formatDecimal(stat.averageRating, 1, 2) + ' / 5' : 'Нет оценок'}">4.50 / 5</div>
+                        <div th:text="|${stat.ratingCount} оц.|" style="color: var(--text-muted);">0 оц.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div th:if="${#lists.isEmpty(teacherRatings)}" style="color: var(--text-muted);">
+                Оценок пока нет.
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Статистика | EduJournal</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <div class="header-actions" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <h1>Статистика</h1>
+            <a th:href="@{/dashboard}" class="btn" style="width: auto;">Назад</a>
+        </div>
+
+        <section style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 2rem; margin-bottom: 2rem;">
+            <h2>Средняя оценка школы</h2>
+            <p style="font-size: 2.5rem; font-weight: 700; margin-top: 1rem;"
+               th:text="${schoolAverage != null ? #numbers.formatDecimal(schoolAverage, 1, 2) : 'Нет оценок'}">4.50</p>
+        </section>
+
+        <section>
+            <h2 style="margin-bottom: 1rem;">Средняя оценка по классам</h2>
+            <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid var(--border); text-align: left;">
+                            <th style="padding: 1rem;">Класс</th>
+                            <th style="padding: 1rem;">Средняя оценка</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="stat : ${classStats}" style="border-bottom: 1px solid var(--border);">
+                            <td style="padding: 1rem;" th:text="${stat.className}">8A</td>
+                            <td style="padding: 1rem;" th:text="${stat.average != null ? #numbers.formatDecimal(stat.average, 1, 2) : 'Нет оценок'}">4.20</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</body>
+</html>
