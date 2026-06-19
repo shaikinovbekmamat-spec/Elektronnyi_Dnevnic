@@ -10,4 +10,6 @@ public interface VideoLessonRepository extends JpaRepository<VideoLesson, Long> 
     List<VideoLesson> findBySchoolClassId(Long classId);
     List<VideoLesson> findBySubjectId(Long subjectId);
     List<VideoLesson> findByTeacherId(Long teacherId);
+    void deleteByTeacherId(Long teacherId);
+    void deleteBySchoolClassId(Long classId);
 }

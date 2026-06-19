@@ -5,6 +5,7 @@ import com.example.taskmanager.dto.GradeDto;
 import com.example.taskmanager.service.GradeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -18,10 +19,15 @@ public class GradeController {
     private final GradeService gradeService;
 
     @PostMapping
-    public ResponseEntity<GradeDto> createGrade(
+    @PreAuthorize("hasRole('TEACHER')")
+    public ResponseEntity<?> createGrade(
             @RequestBody CreateGradeRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(gradeService.createGrade(request, userDetails.getUsername()));
+        try {
+            return ResponseEntity.ok(gradeService.createGrade(request, userDetails.getUsername()));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @GetMapping("/student/{studentId}")
@@ -42,8 +48,13 @@ public class GradeController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteGrade(@PathVariable Long id) {
-        gradeService.deleteGrade(id);
-        return ResponseEntity.noContent().build();
+    @PreAuthorize("hasRole('TEACHER')")
+    public ResponseEntity<?> deleteGrade(@PathVariable Long id) {
+        try {
+            gradeService.deleteGrade(id);
+            return ResponseEntity.noContent().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }

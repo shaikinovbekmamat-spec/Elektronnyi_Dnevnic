@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" 
+<html xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
       th:replace="~{layout :: layout(~{::title}, ~{::content})}">
 <head>
@@ -9,19 +9,38 @@
     <div th:fragment="content">
         <div class="header-actions" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
             <h1>Журнал оценок</h1>
-            <button sec:authorize="hasRole('TEACHER')" class="btn" style="width: auto;" onclick="document.getElementById('grade-modal').style.display='block'">Выставить оценку</button>
+            <a sec:authorize="hasAnyRole('TEACHER', 'DIRECTOR')" th:href="@{/grades}" class="btn" style="width: auto;">К списку классов</a>
         </div>
 
-        <div th:if="${param.success}" class="alert alert-success" style="background: var(--success); color: white; padding: 1rem; border-radius: var(--radius); margin-bottom: 1.5rem;">
-            Оценка успешно добавлена!
+        <div th:if="${param.success}" style="background: var(--success); color: white; padding: 1rem; border-radius: var(--radius); margin-bottom: 1.5rem;">
+            Изменения сохранены.
+        </div>
+        <div th:if="${param.error}" style="background: var(--error); color: white; padding: 1rem; border-radius: var(--radius); margin-bottom: 1.5rem;">
+            Не удалось сохранить оценку. Проверьте четверть, доступ директора и срок редактирования.
         </div>
 
-        <!-- Student View: List of grades -->
-        <div sec:authorize="hasRole('STUDENT')" class="table-container" style="background: var(--surface); padding: 1.5rem; border-radius: var(--radius); border: 1px solid var(--border); overflow-x: auto;">
+        <section sec:authorize="hasRole('DIRECTOR')" style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1.5rem;">
+            <h2 style="margin-bottom: 1rem;">Доступ к итоговому контролю</h2>
+            <p style="margin: 0 0 1rem; color: var(--text-muted);">Откройте четверть перед тем, как учитель внесет итоговую контрольную оценку. Итог четверти считается автоматически и не редактируется вручную.</p>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem;">
+                <form th:each="qa : ${quarterAccesses}" th:action="@{/grades/quarter-access}" method="post" style="display: grid; gap: 0.75rem; background: var(--background); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem;">
+                    <input type="hidden" name="classId" th:if="${selectedClass != null}" th:value="${selectedClass.id}">
+                    <input type="hidden" name="quarter" th:value="${qa.quarter}">
+                    <strong th:text="|${qa.quarter} четверть|">1 четверть</strong>
+                    <span th:text="${qa.open ? 'Открыта' : 'Закрыта'}" th:style="${qa.open ? 'color: var(--success);' : 'color: var(--text-muted);'}">Статус</span>
+                    <input type="hidden" name="open" th:value="${!qa.open}">
+                    <button type="submit" class="btn" style="width: 100%;" th:text="${qa.open ? 'Закрыть' : 'Открыть'}">Открыть</button>
+                </form>
+            </div>
+        </section>
+
+        <div sec:authorize="hasRole('STUDENT')" style="background: var(--surface); padding: 1.5rem; border-radius: var(--radius); border: 1px solid var(--border); overflow-x: auto;">
             <table style="width: 100%; border-collapse: collapse; text-align: left;">
                 <thead>
                     <tr style="border-bottom: 2px solid var(--border);">
                         <th style="padding: 1rem;">Предмет</th>
+                        <th style="padding: 1rem;">Четверть</th>
+                        <th style="padding: 1rem;">Тип</th>
                         <th style="padding: 1rem;">Оценка</th>
                         <th style="padding: 1rem;">Дата</th>
                         <th style="padding: 1rem;">Учитель</th>
@@ -31,51 +50,180 @@
                 <tbody>
                     <tr th:each="grade : ${grades}" style="border-bottom: 1px solid var(--border);">
                         <td style="padding: 1rem;" th:text="${grade.subjectName}">Математика</td>
+                        <td style="padding: 1rem;" th:text="${grade.quarter != null ? grade.quarter : '-'}">1</td>
                         <td style="padding: 1rem;">
-                            <span th:text="${grade.value}" 
-                                  th:style="'background:' + (${grade.value >= 4} ? 'var(--success)' : 'var(--error)') + '; color: white; padding: 0.25rem 0.75rem; border-radius: 4px;'">5</span>
+                            <span th:if="${grade.gradeType.name() == 'REGULAR'}">Обычная</span>
+                            <span th:if="${grade.gradeType.name() == 'FINAL_CONTROL'}">Итоговый контроль</span>
+                            <span th:if="${grade.gradeType.name() == 'QUARTER_FINAL'}">Итог четверти</span>
                         </td>
-                        <td style="padding: 1rem;" th:text="${grade.date}">15.06.2026</td>
-                        <td style="padding: 1rem;" th:text="${grade.teacherName}">Иванов И.И.</td>
-                        <td style="padding: 1rem; color: var(--text-muted);" th:text="${grade.comment}">Отличная работа</td>
+                        <td style="padding: 1rem;">
+                            <span th:text="${grade.value}" th:style="'background:' + (${grade.value >= 4} ? 'var(--success)' : 'var(--error)') + '; color: white; padding: 0.25rem 0.75rem; border-radius: 4px;'">5</span>
+                        </td>
+                        <td style="padding: 1rem;" th:text="${grade.date}">2026-06-18</td>
+                        <td style="padding: 1rem;" th:text="${grade.teacherName}">Учитель</td>
+                        <td style="padding: 1rem; color: var(--text-muted);" th:text="${grade.comment}">Комментарий</td>
                     </tr>
                     <tr th:if="${#lists.isEmpty(grades)}">
-                        <td colspan="5" style="padding: 2rem; text-align: center; color: var(--text-muted);">Оценок пока нет</td>
+                        <td colspan="7" style="padding: 2rem; text-align: center; color: var(--text-muted);">Оценок пока нет</td>
                     </tr>
                 </tbody>
             </table>
         </div>
 
-        <!-- Teacher View: Modal for adding grades -->
-        <div id="grade-modal" class="modal" style="display:none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7);">
-            <div class="auth-container" style="margin: 5% auto; background: var(--surface); padding: 2rem; border: 1px solid var(--border); border-radius: var(--radius);">
-                <span onclick="document.getElementById('grade-modal').style.display='none'" style="float: right; cursor: pointer; font-size: 1.5rem;">&times;</span>
-                <h2>Выставить оценку</h2>
-                <form th:action="@{/grades/add}" method="post" style="margin-top: 1.5rem;">
-                    <div class="form-group">
-                        <label>Ученик</label>
-                        <select name="studentId" required style="width: 100%; padding: 0.75rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);">
-                            <option th:each="student : ${students}" th:if="${student.role.name() == 'STUDENT'}" th:value="${student.id}" th:text="${student.fullName}"></option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Предмет</label>
-                        <select name="subjectId" required style="width: 100%; padding: 0.75rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);">
-                            <option th:each="sub : ${subjects}" th:value="${sub.id}" th:text="${sub.name}"></option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Оценка (1-5)</label>
-                        <input type="number" name="value" min="1" max="5" required style="width: 100%; padding: 0.75rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);">
-                    </div>
-                    <div class="form-group">
-                        <label>Комментарий</label>
-                        <textarea name="comment" style="width: 100%; padding: 0.75rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius); height: 100px;"></textarea>
-                    </div>
-                    <button type="submit" class="btn">Сохранить</button>
-                </form>
+        <section sec:authorize="hasAnyRole('TEACHER', 'DIRECTOR')" th:if="${selectedClass == null}">
+            <h2 style="margin-bottom: 1rem;">Выберите класс</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem;">
+                <a th:each="cl : ${classes}" th:href="@{/grades/class/{id}(id=${cl.id})}" style="display: block; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; text-decoration: none; color: var(--text);">
+                    <strong th:text="${cl.name}">8A</strong>
+                    <div style="color: var(--text-muted); margin-top: 0.4rem;">Год: <span th:text="${cl.year}">8</span></div>
+                </a>
             </div>
-        </div>
+        </section>
+
+        <section sec:authorize="hasRole('TEACHER')" th:if="${selectedClass != null}">
+            <h2 style="margin-bottom: 1rem;">Класс <span th:text="${selectedClass.name}">8A</span></h2>
+            <div style="display: grid; gap: 1.25rem;">
+                <div th:each="student : ${students}" style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem;">
+                    <div style="display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem;">
+                        <div>
+                            <h3 th:text="${student.fullName}" style="margin: 0;">Студент</h3>
+                            <div style="color: var(--text-muted);" th:text="${student.username}">login</div>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; gap: 0.75rem; margin-bottom: 1rem;">
+                        <form th:action="@{/grades/add}" method="post" style="display: grid; grid-template-columns: minmax(110px, 0.8fr) minmax(140px, 1fr) 90px minmax(160px, 1.4fr) auto; gap: 0.75rem; align-items: end;">
+                            <input type="hidden" name="studentId" th:value="${student.id}">
+                            <input type="hidden" name="gradeType" value="REGULAR">
+                            <div>
+                                <label>Четверть</label>
+                                <select name="quarter" required style="width: 100%; padding: 0.6rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);">
+                                    <option th:each="q : ${quarters}" th:value="${q}" th:text="|${q} четверть|">1 четверть</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label>Предмет</label>
+                                <select name="subjectId" required style="width: 100%; padding: 0.6rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);">
+                                    <option th:each="sub : ${subjects}" th:value="${sub.id}" th:text="${sub.name}">Предмет</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label>Оценка</label>
+                                <input type="number" name="value" min="1" max="5" required style="width: 100%; padding: 0.6rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);">
+                            </div>
+                            <div>
+                                <label>Комментарий</label>
+                                <input type="text" name="comment" placeholder="Обычная оценка" style="width: 100%; padding: 0.6rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);">
+                            </div>
+                            <button type="submit" class="btn" style="width: auto;">Выставить</button>
+                        </form>
+
+                        <form th:action="@{/grades/add}" method="post" style="display: grid; grid-template-columns: minmax(110px, 0.8fr) minmax(140px, 1fr) 90px auto; gap: 0.75rem; align-items: end;">
+                            <input type="hidden" name="studentId" th:value="${student.id}">
+                            <input type="hidden" name="gradeType" value="FINAL_CONTROL">
+                            <div>
+                                <label>Четверть</label>
+                                <select name="quarter" required style="width: 100%; padding: 0.6rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);">
+                                    <option th:each="q : ${quarters}" th:value="${q}" th:text="|${q} четверть|">1 четверть</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label>Предмет</label>
+                                <select name="subjectId" required style="width: 100%; padding: 0.6rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);">
+                                    <option th:each="sub : ${subjects}" th:value="${sub.id}" th:text="${sub.name}">Предмет</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label>Балл</label>
+                                <input type="number" name="value" min="1" max="5" required style="width: 100%; padding: 0.6rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);">
+                            </div>
+                            <input type="hidden" name="comment" value="Итоговый контроль">
+                            <button type="submit" class="btn" style="width: auto;">Контроль</button>
+                        </form>
+                    </div>
+
+                    <div style="display: grid; gap: 0.75rem;">
+                        <div th:each="grade : ${classGrades}" th:if="${grade.studentId == student.id}" style="border-top: 1px solid var(--border); padding-top: 0.75rem;">
+                            <form th:if="${grade.editableToday}" th:action="@{/grades/{id}/edit(id=${grade.id})}" method="post" style="display: grid; grid-template-columns: minmax(110px, 0.7fr) minmax(140px, 1fr) 90px minmax(160px, 2fr) auto; gap: 0.75rem; align-items: end;">
+                                <input type="hidden" name="studentId" th:value="${student.id}">
+                                <input type="hidden" name="gradeType" th:value="${grade.gradeType}">
+                                <div>
+                                    <label>Четверть</label>
+                                    <select name="quarter" required style="width: 100%; padding: 0.65rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);">
+                                        <option th:each="q : ${quarters}" th:value="${q}" th:selected="${q == grade.quarter}" th:text="${q}">1</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label th:text="${grade.date}">Дата</label>
+                                    <select name="subjectId" required style="width: 100%; padding: 0.65rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);">
+                                        <option th:each="sub : ${subjects}" th:value="${sub.id}" th:selected="${sub.id == grade.subjectId}" th:text="${sub.name}">Предмет</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label th:text="${grade.gradeType.name() == 'FINAL_CONTROL' ? 'Контроль' : 'Оценка'}">Оценка</label>
+                                    <input type="number" name="value" min="1" max="5" th:value="${grade.value}" required style="width: 100%; padding: 0.65rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);">
+                                </div>
+                                <div>
+                                    <label th:text="${grade.teacherName}">Учитель</label>
+                                    <input type="text" name="comment" th:value="${grade.comment}" style="width: 100%; padding: 0.65rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);">
+                                </div>
+                                <button type="submit" class="btn" style="width: auto;">Сохранить</button>
+                            </form>
+
+                            <div th:unless="${grade.editableToday}" style="display: grid; grid-template-columns: minmax(100px, 0.6fr) minmax(160px, 1fr) 90px minmax(140px, 1fr) minmax(160px, 2fr); gap: 0.75rem; color: var(--text-muted);">
+                                <span th:text="|${grade.quarter != null ? grade.quarter : '-'} четверть|">1 четверть</span>
+                                <span th:text="${grade.subjectName}">Предмет</span>
+                                <strong th:text="${grade.value}" style="color: var(--text);">5</strong>
+                                <span>
+                                    <span th:if="${grade.gradeType.name() == 'REGULAR'}">Обычная</span>
+                                    <span th:if="${grade.gradeType.name() == 'FINAL_CONTROL'}">Итоговый контроль</span>
+                                    <span th:if="${grade.gradeType.name() == 'QUARTER_FINAL'}">Итог четверти</span>
+                                </span>
+                                <span th:text="${grade.comment}">Комментарий</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div th:if="${#lists.isEmpty(students)}" style="color: var(--text-muted); background: var(--surface); border-radius: var(--radius); padding: 1.5rem;">
+                    В этом классе нет студентов.
+                </div>
+            </div>
+        </section>
+
+        <section sec:authorize="hasRole('DIRECTOR')" th:if="${selectedClass != null}" style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem;">
+            <h2 style="margin-bottom: 1rem;">Класс <span th:text="${selectedClass.name}">8A</span></h2>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid var(--border);">
+                            <th style="padding: 0.75rem;">Ученик</th>
+                            <th style="padding: 0.75rem;">Предмет</th>
+                            <th style="padding: 0.75rem;">Четверть</th>
+                            <th style="padding: 0.75rem;">Тип</th>
+                            <th style="padding: 0.75rem;">Оценка</th>
+                            <th style="padding: 0.75rem;">Дата</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="grade : ${classGrades}" style="border-bottom: 1px solid var(--border);">
+                            <td style="padding: 0.75rem;" th:text="${grade.studentName}">Ученик</td>
+                            <td style="padding: 0.75rem;" th:text="${grade.subjectName}">Предмет</td>
+                            <td style="padding: 0.75rem;" th:text="${grade.quarter != null ? grade.quarter : '-'}">1</td>
+                            <td style="padding: 0.75rem;">
+                                <span th:if="${grade.gradeType.name() == 'REGULAR'}">Обычная</span>
+                                <span th:if="${grade.gradeType.name() == 'FINAL_CONTROL'}">Итоговый контроль</span>
+                                <span th:if="${grade.gradeType.name() == 'QUARTER_FINAL'}">Итог четверти</span>
+                            </td>
+                            <td style="padding: 0.75rem;" th:text="${grade.value}">5</td>
+                            <td style="padding: 0.75rem;" th:text="${grade.date}">2026-06-19</td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(classGrades)}">
+                            <td colspan="6" style="padding: 1.5rem; text-align: center; color: var(--text-muted);">Оценок пока нет</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
     </div>
 </body>
 </html>

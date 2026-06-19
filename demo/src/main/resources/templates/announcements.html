@@ -30,6 +30,9 @@
                     </div>
                     <span>Автор: <strong th:text="${ann.authorName}">Администрация</strong></span>
                 </div>
+                <form sec:authorize="hasRole('DIRECTOR')" th:action="@{/announcements/{id}/delete(id=${ann.id})}" method="post" style="margin-top: 1rem;">
+                    <button type="submit" class="btn" style="width: auto; background: var(--error);">Удалить</button>
+                </form>
             </div>
             <div th:if="${#lists.isEmpty(announcements)}" style="text-align: center; padding: 3rem; color: var(--text-muted); background: var(--surface); border-radius: var(--radius);">
                 <p>Объявлений пока нет</p>

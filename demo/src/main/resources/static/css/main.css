@@ -129,6 +129,142 @@ nav {
     background-color: var(--primary-dark);
 }
 
+.rating-section {
+    margin-top: 2rem;
+}
+
+.section-heading {
+    margin-bottom: 1rem;
+}
+
+.section-heading p,
+.text-muted {
+    color: var(--text-muted);
+}
+
+.rating-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1rem;
+}
+
+.rating-card,
+.rating-table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+}
+
+.rating-card {
+    padding: 1.25rem;
+}
+
+.rating-card h3 {
+    font-size: 1rem;
+}
+
+.rating-summary {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    margin: 1rem 0 0.75rem;
+}
+
+.rating-summary span {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.rating-summary small {
+    color: var(--text-muted);
+}
+
+.stars-form {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.stars-form button {
+    width: 2.25rem;
+    height: 2.25rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--background);
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 1.2rem;
+    line-height: 1;
+    transition: var(--transition);
+}
+
+.stars-form button:hover,
+.stars-form button.active {
+    border-color: #facc15;
+    color: #facc15;
+}
+
+.rating-table-wrap {
+    overflow-x: auto;
+}
+
+.rating-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.rating-table th,
+.rating-table td {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+}
+
+.rating-table th {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.rating-dashboard-card {
+    display: flex;
+    flex-direction: column;
+}
+
+.teacher-rating-list {
+    display: grid;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.teacher-rating-row {
+    display: grid;
+    gap: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border);
+}
+
+.teacher-rating-info {
+    display: grid;
+    gap: 0.15rem;
+}
+
+.teacher-rating-info span,
+.teacher-rating-info small {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+.rating-dashboard-card .rating-table-wrap {
+    margin-top: 1rem;
+    border: none;
+    background: transparent;
+}
+
+.rating-dashboard-card .rating-table td {
+    padding: 0.75rem 0;
+    font-size: 0.875rem;
+}
+
 /* Footer */
 footer {
     margin-top: 4rem;

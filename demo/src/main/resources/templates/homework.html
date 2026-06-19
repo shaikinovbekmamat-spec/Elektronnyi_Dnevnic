@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" 
+<html xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
       th:replace="~{layout :: layout(~{::title}, ~{::content})}">
 <head>
@@ -7,40 +7,133 @@
 </head>
 <body>
     <div th:fragment="content">
-        <div class="header-actions" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <div class="header-actions" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap;">
             <h1>Домашние задания</h1>
-            <button sec:authorize="hasRole('TEACHER')" class="btn" style="width: auto;" onclick="document.getElementById('homework-modal').style.display='block'">Выдать задание</button>
+            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                <button sec:authorize="hasRole('STUDENT')" class="btn" style="width: auto;" onclick="document.getElementById('submit-modal').style.display='block'">Отправить решение</button>
+                <button sec:authorize="hasAnyRole('TEACHER', 'DIRECTOR')" class="btn" style="width: auto;" onclick="document.getElementById('homework-modal').style.display='block'">Выдать задание</button>
+            </div>
         </div>
 
-        <div th:if="${param.success}" class="alert alert-success" style="background: var(--success); color: white; padding: 1rem; border-radius: var(--radius); margin-bottom: 1.5rem;">
-            Задание успешно создано!
+        <div th:if="${param.success}" style="background: var(--success); color: white; padding: 1rem; border-radius: var(--radius); margin-bottom: 1.5rem;">
+            Задание сохранено.
+        </div>
+        <div th:if="${param.submitted}" style="background: var(--success); color: white; padding: 1rem; border-radius: var(--radius); margin-bottom: 1.5rem;">
+            Решение отправлено учителю.
+        </div>
+        <div th:if="${param.error}" style="background: var(--error); color: white; padding: 1rem; border-radius: var(--radius); margin-bottom: 1.5rem;">
+            Не удалось сохранить задание. Срок сдачи должен быть позже сегодняшнего дня, а учитель может работать только со своим предметом.
+        </div>
+        <div th:if="${param.submitError}" style="background: var(--error); color: white; padding: 1rem; border-radius: var(--radius); margin-bottom: 1.5rem;">
+            Не удалось отправить решение. Проверьте задание, предмет, учителя и прикрепите файл.
         </div>
 
-        <div class="grid-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 2rem;">
+        <div class="grid-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem;">
             <div th:each="hw : ${homeworks}" class="card" style="background: var(--surface); padding: 1.5rem; border-radius: var(--radius); border: 1px solid var(--border); display: flex; flex-direction: column; justify-content: space-between;">
                 <div>
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
                         <h3 th:text="${hw.title}">Название задания</h3>
-                        <span class="badge" th:text="${hw.subjectName}" style="background: var(--primary); color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem;">Предмет</span>
+                        <span th:text="${hw.subjectName}" style="background: var(--primary); color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem;">Предмет</span>
                     </div>
-                    <p style="margin-top: 1rem; color: var(--text);" th:text="${hw.description}">Описание задания будет здесь...</p>
+                    <p style="margin-top: 1rem; color: var(--text);" th:text="${hw.description}">Описание задания</p>
                     <div style="margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-muted);">
-                        <p>Срок сдачи: <strong th:text="${hw.dueDate}" style="color: var(--error);">20.06.2026</strong></p>
-                        <p>Класс: <span th:text="${hw.className}">10А</span></p>
+                        <p>Срок сдачи: <strong th:text="${hw.dueDate}" style="color: var(--error);">2026-06-20</strong></p>
+                        <p>Класс: <span th:text="${hw.className}">10A</span></p>
+                        <p>Учитель: <span th:text="${hw.teacherName}">Учитель</span></p>
                     </div>
                 </div>
-                <div style="margin-top: 1.5rem; display: flex; gap: 1rem;" th:if="${hw.filePath != null}">
-                    <a th:href="${'/files/' + hw.filePath}" class="btn btn-outline" style="width: 100%; text-align: center; border: 1px solid var(--primary); color: var(--primary); padding: 0.5rem; border-radius: 4px; text-decoration: none;">Скачать файл</a>
+
+                <div style="margin-top: 1.5rem;" th:if="${hw.filePath != null}">
+                    <a th:href="${'/files/' + hw.filePath}" class="btn" style="width: 100%; text-align: center; text-decoration: none;">Скачать файл</a>
                 </div>
+
+                <details sec:authorize="hasAnyRole('TEACHER', 'DIRECTOR')" style="margin-top: 1rem;">
+                    <summary style="cursor: pointer; color: var(--primary); font-weight: 600;">Редактировать</summary>
+                    <form th:action="@{/homework/{id}/edit(id=${hw.id})}" method="post" enctype="multipart/form-data" style="margin-top: 1rem; display: grid; gap: 0.75rem;">
+                        <input type="text" name="title" th:value="${hw.title}" required style="width: 100%; padding: 0.65rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);">
+                        <textarea name="description" required style="width: 100%; padding: 0.65rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius); height: 80px;" th:text="${hw.description}"></textarea>
+                        <select name="classId" required style="width: 100%; padding: 0.65rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);">
+                            <option th:each="cl : ${classes}" th:value="${cl.id}" th:selected="${cl.id == hw.classId}" th:text="${cl.name}">10A</option>
+                        </select>
+                        <select name="subjectId" required style="width: 100%; padding: 0.65rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);">
+                            <option th:each="sub : ${subjects}" th:value="${sub.id}" th:selected="${sub.id == hw.subjectId}" th:text="${sub.name}">Subject</option>
+                        </select>
+                        <input type="date" name="dueDate" th:value="${hw.dueDate}" th:min="${minDueDate}" required style="width: 100%; padding: 0.65rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);">
+                        <input type="file" name="file" style="width: 100%; padding: 0.65rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);">
+                        <button type="submit" class="btn">Сохранить</button>
+                    </form>
+                </details>
             </div>
+
             <div th:if="${#lists.isEmpty(homeworks)}" style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-muted); background: var(--surface); border-radius: var(--radius);">
                 <p>Заданий пока нет</p>
             </div>
         </div>
 
-        <!-- Teacher View: Modal for adding homework -->
-        <div id="homework-modal" class="modal" style="display:none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7);">
-            <div class="auth-container" style="margin: 2% auto; background: var(--surface); padding: 2rem; border: 1px solid var(--border); border-radius: var(--radius); max-width: 500px;">
+        <section th:if="${submissions != null}" style="margin-top: 2.5rem;">
+            <h2 sec:authorize="hasRole('STUDENT')" style="margin-bottom: 1rem;">Мои отправки</h2>
+            <h2 sec:authorize="hasAnyRole('TEACHER', 'DIRECTOR')" style="margin-bottom: 1rem;">Отправленные решения</h2>
+            <div style="display: grid; gap: 1rem;">
+                <div th:each="submission : ${submissions}" style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; display: grid; gap: 0.5rem;">
+                    <div style="display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
+                        <strong th:text="${submission.homeworkTitle}">Задание</strong>
+                        <span th:text="${submission.submittedAt}">2026-06-18T10:00</span>
+                    </div>
+                    <div style="color: var(--text-muted); font-size: 0.9rem;">
+                        <span>Студент: <strong th:text="${submission.studentName}">Студент</strong></span>
+                        <span style="margin-left: 1rem;">Класс: <strong th:text="${submission.className}">10A</strong></span>
+                        <span style="margin-left: 1rem;">Предмет: <strong th:text="${submission.subjectName}">Предмет</strong></span>
+                        <span style="margin-left: 1rem;">Учитель: <strong th:text="${submission.teacherName}">Учитель</strong></span>
+                    </div>
+                    <p th:if="${submission.comment != null and !submission.comment.isBlank()}" th:text="${submission.comment}" style="margin: 0;">Комментарий</p>
+                    <a th:href="${'/files/' + submission.filePath}" class="btn" style="width: fit-content; text-decoration: none;">Скачать решение</a>
+                </div>
+                <div th:if="${#lists.isEmpty(submissions)}" style="color: var(--text-muted); background: var(--surface); border-radius: var(--radius); padding: 1.5rem;">
+                    Отправок пока нет
+                </div>
+            </div>
+        </section>
+
+        <div id="submit-modal" class="modal" style="display:none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); overflow-y: auto; padding: 1rem;">
+            <div class="auth-container" style="margin: 1rem auto; background: var(--surface); padding: 2rem 2rem 1rem; border: 1px solid var(--border); border-radius: var(--radius); max-width: 520px; max-height: calc(100vh - 2rem); overflow-y: auto;">
+                <span onclick="document.getElementById('submit-modal').style.display='none'" style="float: right; cursor: pointer; font-size: 1.5rem;">&times;</span>
+                <h2>Отправить решение</h2>
+                <form th:action="@{/homework/submit}" method="post" enctype="multipart/form-data" style="margin-top: 1.5rem;">
+                    <div class="form-group">
+                        <label>Задание</label>
+                        <select name="homeworkId" required style="width: 100%; padding: 0.75rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);">
+                            <option th:each="hw : ${homeworks}" th:value="${hw.id}" th:text="${hw.title + ' - ' + hw.subjectName + ' - ' + hw.teacherName}">Задание</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Предмет</label>
+                        <select name="subjectId" required style="width: 100%; padding: 0.75rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);">
+                            <option th:each="sub : ${subjects}" th:value="${sub.id}" th:text="${sub.name}">Предмет</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Учитель</label>
+                        <select name="teacherId" required style="width: 100%; padding: 0.75rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);">
+                            <option th:each="teacher : ${teachers}" th:value="${teacher.id}" th:text="${teacher.fullName}">Учитель</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Комментарий</label>
+                        <textarea name="comment" style="width: 100%; padding: 0.75rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius); height: 80px;"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Файл решения</label>
+                        <input type="file" name="file" required style="width: 100%; padding: 0.75rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);">
+                    </div>
+                    <div style="position: sticky; bottom: -1rem; background: var(--surface); padding: 1rem 0 0.5rem; border-top: 1px solid var(--border);">
+                        <button type="submit" class="btn">Отправить</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="homework-modal" class="modal" style="display:none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); overflow-y: auto; padding: 1rem;">
+            <div class="auth-container" style="margin: 1rem auto; background: var(--surface); padding: 2rem 2rem 1rem; border: 1px solid var(--border); border-radius: var(--radius); max-width: 500px; max-height: calc(100vh - 2rem); overflow-y: auto;">
                 <span onclick="document.getElementById('homework-modal').style.display='none'" style="float: right; cursor: pointer; font-size: 1.5rem;">&times;</span>
                 <h2>Выдать задание</h2>
                 <form th:action="@{/homework/add}" method="post" enctype="multipart/form-data" style="margin-top: 1.5rem;">
@@ -55,24 +148,26 @@
                     <div class="form-group">
                         <label>Класс</label>
                         <select name="classId" required style="width: 100%; padding: 0.75rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);">
-                            <option th:each="cl : ${classes}" th:value="${cl.id}" th:text="${cl.name}"></option>
+                            <option th:each="cl : ${classes}" th:value="${cl.id}" th:text="${cl.name}">10A</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label>Предмет</label>
                         <select name="subjectId" required style="width: 100%; padding: 0.75rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);">
-                            <option th:each="sub : ${subjects}" th:value="${sub.id}" th:text="${sub.name}"></option>
+                            <option th:each="sub : ${subjects}" th:value="${sub.id}" th:text="${sub.name}">Subject</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label>Срок сдачи</label>
-                        <input type="date" name="dueDate" required style="width: 100%; padding: 0.75rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);">
+                        <input type="date" name="dueDate" th:min="${minDueDate}" required style="width: 100%; padding: 0.75rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);">
                     </div>
                     <div class="form-group">
-                        <label>Прикрепить файл (необязательно)</label>
+                        <label>Прикрепить файл</label>
                         <input type="file" name="file" style="width: 100%; padding: 0.75rem; background: var(--background); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);">
                     </div>
-                    <button type="submit" class="btn">Выдать задание</button>
+                    <div style="position: sticky; bottom: -1rem; background: var(--surface); padding: 1rem 0 0.5rem; border-top: 1px solid var(--border);">
+                        <button type="submit" class="btn">Сохранить задание</button>
+                    </div>
                 </form>
             </div>
         </div>

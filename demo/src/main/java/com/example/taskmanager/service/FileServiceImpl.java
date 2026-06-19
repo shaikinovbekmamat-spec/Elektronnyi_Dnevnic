@@ -26,13 +26,17 @@ public class FileServiceImpl implements FileService {
         Path filePath = rootPath.resolve(fileName);
         Files.copy(file.getInputStream(), filePath);
 
-        return filePath.toString();
+        return subDirectory + "/" + fileName;
     }
 
     @Override
     public void deleteFile(String filePath) {
         try {
-            Files.deleteIfExists(Paths.get(filePath));
+            Path path = Paths.get(filePath);
+            if (!path.isAbsolute()) {
+                path = Paths.get(uploadDir).resolve(filePath);
+            }
+            Files.deleteIfExists(path.normalize());
         } catch (IOException e) {
             // Log error
         }

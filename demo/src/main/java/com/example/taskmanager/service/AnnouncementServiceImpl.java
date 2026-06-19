@@ -55,6 +55,13 @@ public class AnnouncementServiceImpl implements AnnouncementService {
     }
 
     @Override
+    public List<AnnouncementDto> getVisibleAnnouncementsForStudent(Long classId, Long subjectId) {
+        return announcementRepository.findVisibleForStudent(classId, subjectId).stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public List<AnnouncementDto> getAnnouncementsForClass(Long classId) {
         return announcementRepository.findBySchoolClassId(classId).stream()
                 .map(this::toDto)

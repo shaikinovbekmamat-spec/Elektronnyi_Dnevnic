@@ -32,6 +32,12 @@ public class Grade {
     @Column(nullable = false)
     private Integer value; // оценка 1-5
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "grade_type")
+    private GradeType gradeType;
+
+    private Integer quarter;
+
     private String comment;
 
     @Column(nullable = false)

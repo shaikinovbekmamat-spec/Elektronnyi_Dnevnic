@@ -31,4 +31,12 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
+
+    @ManyToOne
+    @JoinColumn(name = "student_class_id")
+    private SchoolClass studentClass;
+
+    @ManyToOne
+    @JoinColumn(name = "teacher_subject_id")
+    private Subject teacherSubject;
 }

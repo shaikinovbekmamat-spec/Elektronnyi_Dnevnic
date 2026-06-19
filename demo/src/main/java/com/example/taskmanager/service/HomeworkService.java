@@ -8,6 +8,8 @@ import java.util.List;
 
 public interface HomeworkService {
     HomeworkDto createHomework(CreateHomeworkRequest request, MultipartFile file) throws IOException;
+    HomeworkDto updateHomework(Long id, CreateHomeworkRequest request, MultipartFile file) throws IOException;
+    List<HomeworkDto> getAllHomework();
     List<HomeworkDto> getHomeworkByClass(Long classId);
     List<HomeworkDto> getHomeworkByTeacher(Long teacherId);
     void deleteHomework(Long id);

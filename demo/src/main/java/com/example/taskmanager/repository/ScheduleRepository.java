@@ -9,5 +9,9 @@ import java.util.List;
 public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     List<Schedule> findBySchoolClassId(Long classId);
     List<Schedule> findByTeacherId(Long teacherId);
+    List<Schedule> findByTeacherIdAndDayOfWeek(Long teacherId, String dayOfWeek);
+    List<Schedule> findByTeacherIdAndSubjectId(Long teacherId, Long subjectId);
     List<Schedule> findBySchoolClassIdAndDayOfWeek(Long classId, String dayOfWeek);
+    void deleteByTeacherId(Long teacherId);
+    void deleteBySchoolClassId(Long classId);
 }

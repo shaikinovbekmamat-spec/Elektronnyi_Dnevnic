@@ -2,6 +2,8 @@ package com.example.taskmanager.controller;
 
 import com.example.taskmanager.dto.AnnouncementDto;
 import com.example.taskmanager.dto.CreateAnnouncementRequest;
+import com.example.taskmanager.model.Role;
+import com.example.taskmanager.repository.UserRepository;
 import com.example.taskmanager.service.AnnouncementService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +18,7 @@ import java.util.List;
 public class AnnouncementController {
 
     private final AnnouncementService announcementService;
+    private final UserRepository userRepository;
 
     @PostMapping
     @PreAuthorize("hasAnyRole('TEACHER', 'DIRECTOR')")
@@ -26,17 +29,32 @@ public class AnnouncementController {
     }
 
     @GetMapping
-    public ResponseEntity<List<AnnouncementDto>> getAllAnnouncements() {
+    public ResponseEntity<List<AnnouncementDto>> getAllAnnouncements(Principal principal) {
+        var user = userRepository.findByUsername(principal.getName())
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+        if (user.getRole() == Role.STUDENT) {
+            if (user.getStudentClass() == null) {
+                return ResponseEntity.ok(List.of());
+            }
+            return ResponseEntity.ok(announcementService.getVisibleAnnouncementsForStudent(
+                    user.getStudentClass().getId(), null));
+        }
         return ResponseEntity.ok(announcementService.getAllAnnouncements());
     }
 
     @GetMapping("/class/{classId}")
-    public ResponseEntity<List<AnnouncementDto>> getAnnouncementsByClass(@PathVariable Long classId) {
+    public ResponseEntity<List<AnnouncementDto>> getAnnouncementsByClass(@PathVariable Long classId, Principal principal) {
+        var user = userRepository.findByUsername(principal.getName())
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+        if (user.getRole() == Role.STUDENT
+                && (user.getStudentClass() == null || !user.getStudentClass().getId().equals(classId))) {
+            return ResponseEntity.status(403).build();
+        }
         return ResponseEntity.ok(announcementService.getAnnouncementsForClass(classId));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('TEACHER', 'DIRECTOR')")
+    @PreAuthorize("hasRole('DIRECTOR')")
     public ResponseEntity<Void> deleteAnnouncement(@PathVariable Long id) {
         announcementService.deleteAnnouncement(id);
         return ResponseEntity.noContent().build();

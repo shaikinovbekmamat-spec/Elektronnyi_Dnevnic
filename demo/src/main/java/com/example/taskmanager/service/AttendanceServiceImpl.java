@@ -22,12 +22,20 @@ public class AttendanceServiceImpl implements AttendanceService {
 
     @Override
     public AttendanceDto markAttendance(MarkAttendanceRequest request) {
+        if (request.getDate() == null || !LocalDate.now().equals(request.getDate())) {
+            throw new RuntimeException("Attendance can be changed only on the current date");
+        }
+        if (request.getStatus() == null || request.getStatus().isBlank()) {
+            throw new RuntimeException("Attendance status is required");
+        }
         var student = userRepository.findById(request.getStudentId())
                 .orElseThrow(() -> new RuntimeException("Ученик не найден"));
         var schedule = scheduleRepository.findById(request.getScheduleId())
                 .orElseThrow(() -> new RuntimeException("Урок не найден"));
 
-        Attendance attendance = new Attendance();
+        Attendance attendance = attendanceRepository
+                .findFirstByStudentIdAndScheduleIdAndDate(student.getId(), schedule.getId(), request.getDate())
+                .orElseGet(Attendance::new);
         attendance.setStudent(student);
         attendance.setSchedule(schedule);
         attendance.setDate(request.getDate());

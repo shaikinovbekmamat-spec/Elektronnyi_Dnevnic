@@ -18,8 +18,12 @@ public class AttendanceController {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('TEACHER', 'DIRECTOR')")
-    public ResponseEntity<AttendanceDto> markAttendance(@RequestBody MarkAttendanceRequest request) {
-        return ResponseEntity.ok(attendanceService.markAttendance(request));
+    public ResponseEntity<?> markAttendance(@RequestBody MarkAttendanceRequest request) {
+        try {
+            return ResponseEntity.ok(attendanceService.markAttendance(request));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @GetMapping("/student/{studentId}")
